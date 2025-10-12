@@ -29,13 +29,21 @@ public class Bullet : MonoBehaviour
 			transform.forward * speed * Time.deltaTime;       
     }
 
-   
+
     private void OnCollisionEnter(Collision collision)
     {
-        // Spawn the explosion effect on the collision point
+        
         ContactPoint contact = collision.contacts[0];
         Instantiate(explosion, contact.point, Quaternion.identity);
-        // Destroy gameobject since it already collided with something
+        if (collision.gameObject.GetComponent<PlayerTankController>())
+        {
+            collision.gameObject.GetComponent<PlayerTankController>().health -= damage;
+        }
+        else if (collision.gameObject.GetComponent<EnemyTankController>())
+        {
+            collision.gameObject.GetComponent<EnemyTankController>().health -= damage;
+        }
+        
         Destroy(gameObject);
     }
 }

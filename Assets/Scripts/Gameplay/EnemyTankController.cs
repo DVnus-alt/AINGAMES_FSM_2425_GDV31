@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyTankController : AdvancedFiniteStateMachine
 {
@@ -8,10 +9,28 @@ public class EnemyTankController : AdvancedFiniteStateMachine
     [SerializeField]
     private float rotateSpeed;
 
+    [Header("Stats")]
+    public GameObject bullet;
+    public Transform turret;
+    public Transform bulletSpawnPoint;
+    public float curSpeed, targetSpeed, rotSpeed;
+    public float turretRotSpeed = 10.0f;
+    public float shootRate;
+    public float elapsedTime;
+    public Slider healthBar;
+
+    [Header("Attributes")]
+    public float maxHealth;
+    public float health;
+    public bool death = false;
+    public GameObject gore;
+
+
     [Header("AI Variables")]
     [Tooltip("How close to the player is considered as a chasing range")]
     [SerializeField]
     private float chaseDistance;
+    public float attackDistance;
 
     [Tooltip("How close to the target waypoint before moving to the next waypoint")]
     [SerializeField]
@@ -29,38 +48,88 @@ public class EnemyTankController : AdvancedFiniteStateMachine
     public float ChaseDistance => chaseDistance;
     public float WaypointDistance => waypointDistance;
 
+    public float AttackDistance => attackDistance;
+
+
+    /*public void Start()
+    {
+        health = maxHealth;
+    }*/
+
+    /*public void Update()
+    {
+        if (health <= 0)
+        {
+            death = true;
+        }
+
+        if (death)
+        {
+            this.gameObject.SetActive(false);
+        }
+    }*/
+
     protected override void Initialize()
     {
-        // Define the actual FSM and possible states the enemy tank controller can be
+        health = maxHealth;
+
         PatrolState patrolState = new PatrolState(this, waypoints);
-        // Define the transition rules
+       
         patrolState.AddTransition(TransitionID.SawPlayer, StateID.Chase);
 
         ChaseState chaseState = new ChaseState(this);
         chaseState.AddTransition(TransitionID.ReachPlayer, StateID.Attack);
-        chaseState.AddTransition(TransitionID.LostPlayer, StateID.Patrol);
+        
+
+        AttackState attackState = new AttackState(this);
+        attackState.AddTransition(TransitionID.LostPlayer, StateID.Patrol);
 
         AddState(patrolState);
         AddState(chaseState);
+        AddState(attackState);
 
         Debug.Log("Added states");
     }
 
     protected override void UpdateStateMachine()
     {
+        healthBar.maxValue = maxHealth;
+        healthBar.value = health;
+        if (health <= 0)
+        {
+            Instantiate(gore, transform.position, Quaternion.identity);
+            death = true;
+        }
+
+        if (death)
+        {
+            this.gameObject.SetActive(false);
+        }
         CurrentState.RunState(this.transform, player);
         CurrentState.CheckTransition(this.transform, player);
     }
 
     public void MoveToTarget(Transform currentTarget)
     {
-        // Enemy will move to the target waypoint
-        Vector3 targetDirection = currentTarget.position - transform.position;
-        // Get the rotation that faces the targetDirection
-        Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-        // Do the actual rotation by making the enemy look towards the targetRotation
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotateSpeed);
-        // Since it's already rotated, just make it move forward
-        transform.Translate(Vector3.forward * Time.deltaTime * moveSpeed);
+        if (CurrentState.StateId != StateID.Attack)
+        {
+            // Enemy will move to the target waypoint
+            Vector3 targetDirection = currentTarget.position - transform.position;
+            // Get the rotation that faces the targetDirection
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+            // Do the actual rotation by making the enemy look towards the targetRotation
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotateSpeed);
+            // Since it's already rotated, just make it move forward
+            transform.Translate(Vector3.forward * Time.deltaTime * moveSpeed);
+        }
+        else
+        {
+            transform.Translate(Vector3.forward * 0);
+        }
+    }
+
+    public void Shoot()
+    {
+        Instantiate(bullet, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
     }
 }

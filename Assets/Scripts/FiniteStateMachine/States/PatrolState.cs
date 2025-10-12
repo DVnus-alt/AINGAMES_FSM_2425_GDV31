@@ -27,8 +27,9 @@ public class PatrolState : FSMState
 
     public override void RunState(Transform agent, Transform player)
     {
+        _enemyTankController.turret.transform.rotation = Quaternion.Slerp(_enemyTankController.turret.transform.rotation, agent.rotation, Time.deltaTime * _enemyTankController.turretRotSpeed);
         // Do the actual behaviour of patrolling
-        if(Vector3.Distance(agent.position, _currentTarget.position) <= _enemyTankController.WaypointDistance)
+        if (Vector3.Distance(agent.position, _currentTarget.position) <= _enemyTankController.WaypointDistance)
         {
             RandomizeWaypointTarget();
         }

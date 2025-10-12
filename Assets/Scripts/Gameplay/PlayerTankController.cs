@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class PlayerTankController : MonoBehaviour
@@ -14,15 +15,25 @@ public class PlayerTankController : MonoBehaviour
     private Transform bulletSpawnPoint;    
     private float curSpeed, targetSpeed, rotSpeed;
     private float turretRotSpeed = 10.0f;
-    
+
+    public Slider healthBar;
+
     //Bullet shooting rate
     protected float shootRate;
     protected float elapsedTime;
+
+    [Header("Attributes")]
+    public float maxHealth;
+    public float health;
+    public bool death = false;
+    public GameObject gore;
 
     private void Start()
     {
         //Tank Settings
         rotSpeed = 150.0f;
+
+        health = maxHealth;
 
         //Get the turret of the tank
         turret = gameObject.transform.GetChild(0).transform;
@@ -39,6 +50,19 @@ public class PlayerTankController : MonoBehaviour
     {
         UpdateControl();
         UpdateWeapon();
+
+        healthBar.maxValue = maxHealth;
+        healthBar.value = health;
+        if (health <= 0)
+        {
+            Instantiate(gore, transform.position, Quaternion.identity);
+            death = true;
+        }
+
+        if (death)
+        {
+            this.gameObject.SetActive(false);
+        }
     }
     
     private void UpdateControl()
